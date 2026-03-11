@@ -11,8 +11,9 @@ Spring Boot implementation of a scalable URL shortener with:
 
 ## Tech stack
 - Java 17 + Spring Boot 3
-- PostgreSQL
-- Redis
+- PostgreSQL (docker profile)
+- Redis (docker profile cache)
+- H2 (default local profile for quick run/tests)
 - Docker / Docker Compose
 
 ## API
@@ -47,12 +48,12 @@ Response: `302 Found` with `Location` header.
 
 Response includes `clickCount`, `createdAt`, `expiresAt`, and `longUrl`.
 
-## Local run
+## Run locally
 ```bash
 mvn spring-boot:run
 ```
 
-## Docker run (local)
+## Run with Docker (Postgres + Redis)
 ```bash
 docker compose up --build
 ```
