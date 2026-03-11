@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: url-shortener-api
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: docker
+      - key: APP_BASE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: url-shortener-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: url-shortener-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: url-shortener-db
+          property: password
+      - key: SPRING_DATA_REDIS_HOST
+        fromService:
+          type: redis
+          name: url-shortener-redis
+          property: host
+      - key: SPRING_DATA_REDIS_PORT
+        fromService:
+          type: redis
+          name: url-shortener-redis
+          property: port
+
+  - type: redis
+    name: url-shortener-redis
+    ipAllowList: []
+    plan: starter
+
+databases:
+  - name: url-shortener-db
+    plan: starter
+    databaseName: urlshortener
+    user: url_user

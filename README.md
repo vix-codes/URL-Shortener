@@ -1,316 +1,81 @@
 # URL Shortener Service
 
-A scalable service that converts long URLs into short, shareable links similar to Bitly or TinyURL.
+Spring Boot implementation of a scalable URL shortener with:
+- Short URL generation using Base62
+- Redirect endpoint with cache-backed lookup
+- Custom aliases
+- Expiration support
+- Click analytics
+- Duplicate URL prevention (same non-expiring long URL reuses code)
+- Basic rate limiting (per-IP, per-minute)
 
-Example:
+## Tech stack
+- Java 17 + Spring Boot 3
+- PostgreSQL
+- Redis
+- Docker / Docker Compose
 
-```
-https://google.com/search?q=ai
-↓
-vix.ly/aZ91K
-```
+## API
+### Create short URL
+`POST /shorten`
 
----
-
-# Features
-
-* Short URL generation
-* Fast redirection
-* Custom aliases
-* URL expiration
-* Click analytics
-* Duplicate URL prevention
-* Rate limiting support
-
----
-
-# System Architecture
-
-```
-Client
-  ↓
-Load Balancer
-  ↓
-API Server (Spring Boot)
-  ↓
-Cache Layer (Redis)
-  ↓
-Database (PostgreSQL)
-```
-
----
-
-# Request Flow
-
-## URL Shortening
-
-1. User submits long URL
-2. Server generates a unique short ID
-3. Mapping stored in database
-4. Short URL returned to user
-
-```
-User → API → DB → Response
-```
-
----
-
-## URL Redirect
-
-1. User accesses short URL
-2. Server checks Redis cache
-3. If found → redirect
-4. Otherwise fetch from database
-5. Cache result and redirect
-
-```
-User → API → Redis → DB → Redirect
-```
-
----
-
-# Tech Stack
-
-## Backend
-
-* Java
-* Spring Boot
-
-## Database
-
-* PostgreSQL
-
-## Cache
-
-* Redis
-
-## Deployment
-
-* Docker
-* AWS
-
----
-
-# API Endpoints
-
-## Create Short URL
-
-```
-POST /shorten
-```
-
-Request
-
+Request:
 ```json
 {
-  "url": "https://google.com/search?q=ai"
+  "url": "https://google.com/search?q=ai",
+  "alias": "optional-custom-code",
+  "expiresAt": "2027-01-01T00:00:00Z"
 }
 ```
 
-Response
-
+Response:
 ```json
 {
-  "shortUrl": "vix.ly/aZ91K"
+  "shortUrl": "http://localhost:8080/aZ91K",
+  "shortCode": "aZ91K",
+  "longUrl": "https://google.com/search?q=ai"
 }
 ```
 
----
+### Redirect
+`GET /{shortCode}`
 
-## Redirect
+Response: `302 Found` with `Location` header.
 
-```
-GET /{shortCode}
-```
+### Analytics
+`GET /analytics/{shortCode}`
 
-Example
+Response includes `clickCount`, `createdAt`, `expiresAt`, and `longUrl`.
 
-```
-GET vix.ly/aZ91K
-```
-
-Response
-
-```
-302 Redirect → https://google.com/search?q=ai
+## Local run
+```bash
+mvn spring-boot:run
 ```
 
----
-
-## Create Custom Alias
-
-```
-POST /shorten
+## Docker run (local)
+```bash
+docker compose up --build
 ```
 
-Request
+## Render deployment
+1. Push this repo to GitHub.
+2. In Render, create a **Blueprint** and point it to the repo.
+3. Render will use `render.yaml` to create:
+   - Web service (`url-shortener-api`)
+   - PostgreSQL (`url-shortener-db`)
+   - Redis (`url-shortener-redis`)
+4. Set `APP_BASE_URL` in Render to your Render API URL (e.g. `https://url-shortener-api.onrender.com`).
+5. Use `/actuator/health` for health checks.
 
-```json
-{
-  "url": "https://google.com",
-  "alias": "google"
-}
+## Vercel deployment (edge proxy in front of Render)
+1. Import this repo into Vercel.
+2. Deploy with the included `vercel.json`.
+3. Update the rewrite destination in `vercel.json` from `https://url-shortener-api.onrender.com` to your actual Render backend URL.
+4. (Optional) Add custom domain in Vercel and point users to that domain.
+
+> Note: Vercel is used here as the public edge/domain layer; the Spring Boot runtime is hosted on Render.
+
+## Tests
+```bash
+mvn test
 ```
-
-Response
-
-```
-vix.ly/google
-```
-
----
-
-# Database Schema
-
-## urls
-
-| Column      | Type      | Description      |
-| ----------- | --------- | ---------------- |
-| id          | BIGINT    | Primary key      |
-| short_code  | VARCHAR   | Unique short ID  |
-| long_url    | TEXT      | Original URL     |
-| created_at  | TIMESTAMP | Creation time    |
-| expires_at  | TIMESTAMP | Expiration time  |
-| click_count | BIGINT    | Number of clicks |
-
-Index
-
-```
-INDEX(short_code)
-```
-
----
-
-# Short URL Generation
-
-Short IDs are generated using Base62 encoding.
-
-Character set
-
-```
-a-z
-A-Z
-0-9
-```
-
-Example
-
-```
-125 → cb
-124351 → aZ91K
-```
-
-Benefits
-
-* Compact URLs
-* High uniqueness
-* Human-readable links
-
----
-
-# Caching Strategy
-
-Redis stores frequently accessed links.
-
-Example
-
-```
-Key: short_code
-Value: long_url
-```
-
-Benefits
-
-* Reduces database load
-* Faster redirects
-* Improves scalability
-
----
-
-# Analytics
-
-Click events tracked for each redirect.
-
-Metrics include
-
-* Total clicks
-* Device type
-* Location
-* Timestamp
-
-Analytics pipeline
-
-```
-Redirect Service
-     ↓
-Event Queue
-     ↓
-Analytics Worker
-     ↓
-Analytics Database
-```
-
----
-
-# Scaling Strategy
-
-## Horizontal Scaling
-
-Multiple API servers behind a load balancer.
-
-## Database Scaling
-
-* Read replicas
-* Indexing
-
-## CDN
-
-Global caching for redirect endpoints.
-
----
-
-# Security
-
-* URL validation
-* Malicious URL filtering
-* Rate limiting
-* HTTPS support
-
----
-
-# Deployment
-
-Run using Docker
-
-```
-docker build -t url-shortener .
-docker run -p 8080:8080 url-shortener
-```
-
----
-
-# Future Improvements
-
-* QR code generation
-* Link preview
-* Analytics dashboard
-* Geo-based routing
-* Custom domains
-
----
-
-# Example
-
-```
-Input
-https://google.com/search?q=ai
-
-Output
-vix.ly/aZ91K
-```
-
----
-
-# License
-
-MIT License
