@@ -58,26 +58,7 @@ mvn spring-boot:run
 docker compose up --build
 ```
 
-## Render deployment
-1. Push this repo to GitHub.
-2. In Render, create a **Blueprint** and point it to the repo.
-3. Render will use `render.yaml` to create:
-   - Web service (`url-shortener-api`)
-   - PostgreSQL (`url-shortener-db`)
-   - Redis (`url-shortener-redis`)
-4. Set `APP_BASE_URL` in Render to your Render API URL (e.g. `https://url-shortener-api.onrender.com`).
-5. Use `/actuator/health` for health checks.
-6. Optionally set `SPRING_PROFILES_ACTIVE=docker` (the Dockerfile defaults to `docker`).
-
-## Vercel deployment (edge proxy in front of Render)
-1. Import this repo into Vercel.
-2. Deploy with the included `vercel.json`.
-3. Update the rewrite destination in `vercel.json` from `https://url-shortener-api.onrender.com` to your actual Render backend URL.
-4. (Optional) Add custom domain in Vercel and point users to that domain.
-
-> Note: Vercel is used here as the public edge/domain layer; the Spring Boot runtime is hosted on Render.
-
-## Tests
+## Run tests
 ```bash
 mvn test
 ```
