@@ -67,6 +67,7 @@ docker compose up --build
    - Redis (`url-shortener-redis`)
 4. Set `APP_BASE_URL` in Render to your Render API URL (e.g. `https://url-shortener-api.onrender.com`).
 5. Use `/actuator/health` for health checks.
+6. Optionally set `SPRING_PROFILES_ACTIVE=docker` (the Dockerfile defaults to `docker`).
 
 ## Vercel deployment (edge proxy in front of Render)
 1. Import this repo into Vercel.
