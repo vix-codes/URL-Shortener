@@ -2,6 +2,18 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/shorten",
+      "destination": "https://url-shortener-production-d2f5.up.railway.app/shorten"
+    },
+    {
+      "source": "/analytics/:code([A-Za-z0-9]{1,32})",
+      "destination": "https://url-shortener-production-d2f5.up.railway.app/analytics/:code"
+    },
+    {
+      "source": "/:code([A-Za-z0-9]{1,32})",
+      "destination": "https://url-shortener-production-d2f5.up.railway.app/:code"
+    },
+    {
       "source": "/",
       "destination": "/frontend/index.html"
     },
