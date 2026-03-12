@@ -1,99 +1,233 @@
-# URL Shortener Service
+# 🔗 URL Shortener Service
 
-Spring Boot implementation of a scalable URL shortener with:
-- Short URL generation using Base62
-- Redirect endpoint with cache-backed lookup
-- Custom aliases
-- Expiration support
-- Click analytics
-- Duplicate URL prevention (same non-expiring long URL reuses code)
-- Basic rate limiting (per-IP, per-minute)
+A production-ready **URL shortener backend + lightweight frontend** built with **Spring Boot 3** and **Java 17**.
 
-## Tech stack
-- Java 17 + Spring Boot 3
-- PostgreSQL (docker profile)
-- Redis (docker profile cache)
-- H2 (default local profile for quick run/tests)
+It lets you:
+- Create short links from long URLs.
+- Use custom aliases (e.g., `/docs`).
+- Set optional expiration dates.
+- Redirect users quickly via short codes.
+- Track click analytics per short URL.
+- Reuse existing codes for duplicate non-expiring URLs.
+- Protect the API with basic per-IP rate limiting.
+
+---
+
+## ✨ Features
+
+- **Short URL creation** via `POST /shorten`
+- **HTTP redirect** via `GET /{shortCode}` (returns `302 Found`)
+- **Analytics endpoint** via `GET /analytics/{shortCode}`
+- **Custom alias support** (`alias` in request)
+- **Expiration support** (`expiresAt` in request)
+- **Validation + friendly error responses**
+- **In-memory rate limiter** (`120 requests/minute/IP`)
+- **Cache-enabled lookup** for short code resolution
+- **Health endpoint** via `GET /health-check`
+- **Simple frontend** in `/frontend` for shortening and analytics
+
+---
+
+## 🧱 Tech Stack
+
+### Backend
+- Java 17
+- Spring Boot 3.3
+- Spring Web
+- Spring Data JPA
+- Spring Validation
+- Spring Cache
+
+### Data & Cache
+- **Default local profile:** H2 in-memory database + simple cache
+- **Container/deploy profile:** PostgreSQL + Redis-compatible cache settings
+
+### DevOps
+- Maven
 - Docker / Docker Compose
+- Vercel + Render deployment configs included
 
-## API
-### Create short URL
+---
+
+## 📡 API Reference
+
+### 1) Create a short URL
 `POST /shorten`
 
-Request:
+#### Request body
 ```json
 {
-  "url": "https://google.com/search?q=ai",
+  "url": "https://example.com/some/very/long/path",
   "alias": "optional-custom-code",
   "expiresAt": "2027-01-01T00:00:00Z"
 }
 ```
 
-Response:
+#### Notes
+- `url` is required and must be a valid `http` or `https` URL.
+- `alias` is optional. If provided, it must be unique.
+- `expiresAt` is optional. If provided, it must be in the future.
+
+#### Success response (`201 Created`)
 ```json
 {
-  "shortUrl": "http://localhost:8080/aZ91K",
-  "shortCode": "aZ91K",
-  "longUrl": "https://google.com/search?q=ai"
+  "shortUrl": "http://localhost:8080/abc12",
+  "shortCode": "abc12",
+  "longUrl": "https://example.com/some/very/long/path"
 }
 ```
 
-### Redirect
+---
+
+### 2) Redirect using short code
 `GET /{shortCode}`
 
-Response: `302 Found` with `Location` header.
+#### Behavior
+- Returns **`302 Found`**.
+- Sets `Location` header to the original URL.
+- Increments click count.
+- If code is not found or expired, returns `404`.
 
-### Analytics
+---
+
+### 3) Get analytics
 `GET /analytics/{shortCode}`
 
-Response includes `clickCount`, `createdAt`, `expiresAt`, and `longUrl`.
+#### Success response (`200 OK`)
+```json
+{
+  "shortCode": "abc12",
+  "clickCount": 42,
+  "createdAt": "2026-01-01T10:00:00Z",
+  "expiresAt": "2027-01-01T00:00:00Z",
+  "longUrl": "https://example.com/some/very/long/path"
+}
+```
 
-## Run locally
+---
+
+### 4) Health check
+`GET /health-check`
+
+#### Response
+```json
+{
+  "status": "UP",
+  "message": "Backend is reachable!"
+}
+```
+
+---
+
+## ⚠️ Rate Limiting
+
+All non-`OPTIONS` requests are limited to:
+- **120 requests per minute per client IP**
+
+When exceeded:
+- HTTP `429 Too Many Requests`
+- Response body:
+```json
+{"message":"Rate limit exceeded"}
+```
+
+---
+
+## 🚀 Running Locally
+
+### Prerequisites
+- Java 17+
+- Maven 3.9+
+
+### Start backend
 ```bash
 mvn spring-boot:run
 ```
 
-## Run with Docker (Postgres + Redis)
-```bash
-docker compose up --build
-```
+Backend starts at:
+- `http://localhost:8080`
 
-## Run tests
+### Run tests
 ```bash
 mvn test
 ```
 
+---
 
-## Deploy on Render
-1. Push this repository to GitHub.
-2. In Render, create a new Blueprint and select this repo.
-3. Render will use `render.yaml` to provision:
-   - Web service (Docker)
-   - PostgreSQL database
-   - Redis instance
-4. Update `APP_BASE_URL` in Render if your service URL differs from the default placeholder.
+## 🐳 Run with Docker Compose
 
-## Deploy on Vercel
-This repository includes `vercel.json` configured for Docker-based deployment using `@vercel/docker`.
+This starts the app with containerized dependencies.
 
-1. Import the repository in Vercel.
-2. Add environment variables in the Vercel project settings:
-   - `SPRING_DATASOURCE_URL`
-   - `SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver`
-   - `SPRING_DATASOURCE_USERNAME`
-   - `SPRING_DATASOURCE_PASSWORD`
-   - `SPRING_JPA_HIBERNATE_DDL_AUTO=update`
-   - `SPRING_CACHE_TYPE=redis`
-   - `SPRING_DATA_REDIS_HOST`
-   - `SPRING_DATA_REDIS_PORT`
-   - `APP_BASE_URL` (your Vercel domain)
-3. Deploy.
+```bash
+docker compose up --build
+```
 
-## Runtime environment variables
-The app now supports deploy-friendly environment overrides:
-- `PORT`
-- `APP_BASE_URL`
-- `SPRING_DATASOURCE_*`
-- `SPRING_CACHE_TYPE`
+---
+
+## 🌐 Frontend
+
+A static UI is included in the `frontend/` folder:
+- `index.html`
+- `style.css`
+- `app.js`
+
+It supports:
+- Creating short URLs
+- Checking analytics by short code
+- Copying generated links to clipboard
+
+You can serve it with any static server.
+
+---
+
+## ⚙️ Configuration
+
+Key environment variables:
+
+- `PORT` (default: `8080`)
+- `APP_BASE_URL` (default: `http://localhost:8080`)
+- `SPRING_DATASOURCE_URL`
+- `SPRING_DATASOURCE_DRIVER_CLASS_NAME`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `SPRING_JPA_HIBERNATE_DDL_AUTO` (default: `update`)
+- `SPRING_CACHE_TYPE` (default: `simple`)
 - `SPRING_DATA_REDIS_HOST`
 - `SPRING_DATA_REDIS_PORT`
+- `ALLOWED_ORIGINS` (CSV list for CORS)
+
+---
+
+## 🚢 Deployment
+
+### Render
+This repo includes deployment helpers (`DEPLOYMENT.md` and container files).
+
+### Vercel
+- Root `vercel.json` for backend container deployment
+- `frontend/vercel.json` for frontend deployment flow
+
+---
+
+## 📁 Project Structure
+
+```text
+src/main/java/com/example/urlshortener
+├── config/                 # MVC config, CORS, interceptors
+├── controller/             # REST endpoints + global exception handling
+├── dto/                    # Request/response DTOs
+├── entity/                 # JPA entity
+├── exception/              # Custom exceptions
+├── repository/             # Data access
+├── service/                # Core business logic
+└── web/                    # Interceptors (rate limiter)
+```
+
+---
+
+## 📄 MIT License
+
+This project is licensed under the **MIT License**.
+
+See the full license text in [`LICENSE`](./LICENSE).
+
