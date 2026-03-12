@@ -56,8 +56,10 @@ public class UrlShortenerService {
         if (shortUrl.isExpired()) {
             throw new NotFoundException("Short URL has expired.");
         }
-        shortUrl.incrementClickCount();
-        repository.save(shortUrl);
+        
+        // Use a repository method for atomic increment to avoid lost updates
+        repository.incrementClickCount(shortUrl.getId());
+        
         return shortUrl.getLongUrl();
     }
 
@@ -88,14 +90,20 @@ public class UrlShortenerService {
         entity.setExpiresAt(expiresAt);
 
         if (preferredCode == null || preferredCode.isBlank()) {
+            // First save to get the ID
             ShortUrl saved = repository.save(entity);
-            saved.setShortCode(base62Service.encode(saved.getId()));
-            saved = persist(saved);
+            // Then encode ID to get shortCode
+            String encoded = base62Service.encode(saved.getId());
+            saved.setShortCode(encoded);
+            // Final save to persist shortCode
+            saved = repository.save(saved);
+            // Evict from cache just in case (though unlikely to be there)
+            evict(encoded);
             return toResponse(saved);
         }
 
         entity.setShortCode(preferredCode);
-        ShortUrl saved = persist(entity);
+        ShortUrl saved = repository.save(entity);
         return toResponse(saved);
     }
 

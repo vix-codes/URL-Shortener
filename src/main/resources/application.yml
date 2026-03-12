@@ -8,12 +8,26 @@ spring:
     driverClassName: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 60000
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
+    show-sql: ${SHOW_SQL:false}
   cache:
     type: ${SPRING_CACHE_TYPE:simple}
+
+logging:
+  level:
+    root: INFO
+    com.example.urlshortener: DEBUG
+    org.hibernate.SQL: ${LOG_SQL_LEVEL:INFO}
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
