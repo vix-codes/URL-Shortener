@@ -1,5 +1,7 @@
 package com.example.urlshortener.controller;
 
+import com.example.urlshortener.exception.BadRequestException;
+import com.example.urlshortener.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
