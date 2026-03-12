@@ -15,6 +15,22 @@ const clickCountSpan = document.getElementById('clickCount');
 const createdAtSpan = document.getElementById('createdAt');
 const expiresAtSpan = document.getElementById('expiresAt');
 
+function extractShortCode(input) {
+    const raw = (input || '').trim();
+    if (!raw) return '';
+
+    // If user pasted a full URL, parse and grab the first path segment.
+    try {
+        const parsed = new URL(raw);
+        const path = (parsed.pathname || '/').replace(/^\/+/, '');
+        const code = path.split('/')[0]?.trim() || '';
+        return code;
+    } catch (_) {
+        // Not a URL; treat as direct short code (strip any leading '/')
+        return raw.replace(/^\/+/, '');
+    }
+}
+
 // Shorten URL
 shortenBtn.addEventListener('click', async () => {
     const url = longUrlInput.value;
@@ -53,9 +69,9 @@ shortenBtn.addEventListener('click', async () => {
 
 // Analytics
 checkAnalyticsBtn.addEventListener('click', async () => {
-    const code = analyticsCodeInput.value.trim();
+    const code = extractShortCode(analyticsCodeInput.value);
     if (!code) {
-        showToast('Please enter a short code', 'error');
+        showToast('Please paste a short URL or code', 'error');
         return;
     }
 

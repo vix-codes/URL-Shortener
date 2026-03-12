@@ -173,7 +173,7 @@ A static UI is included in the `frontend/` folder:
 
 It supports:
 - Creating short URLs
-- Checking analytics by short code
+- Checking analytics by short URL or short code
 - Copying generated links to clipboard
 
 You can serve it with any static server.
