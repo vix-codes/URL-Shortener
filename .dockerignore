@@ -1,0 +1,14 @@
+target
+.mvn
+.idea
+.vscode
+.git
+*.iml
+*.log
+frontend/node_modules
+node_modules
+Dockerfile*
+docker-compose.yml
+*.md
+**/.DS_Store
+
