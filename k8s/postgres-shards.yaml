@@ -1,0 +1,142 @@
+# Database Shard 0
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-shard-0
+  labels:
+    app: postgres-shard-0
+spec:
+  serviceName: postgres-shard-0-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-shard-0
+  template:
+    metadata:
+      labels:
+        app: postgres-shard-0
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          envFrom:
+            - secretRef:
+                name: url-shortener-secrets
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-shard-0-service
+  labels:
+    app: postgres-shard-0
+spec:
+  selector:
+    app: postgres-shard-0
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+# Database Shard 1
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-shard-1
+  labels:
+    app: postgres-shard-1
+spec:
+  serviceName: postgres-shard-1-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-shard-1
+  template:
+    metadata:
+      labels:
+        app: postgres-shard-1
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          envFrom:
+            - secretRef:
+                name: url-shortener-secrets
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-shard-1-service
+  labels:
+    app: postgres-shard-1
+spec:
+  selector:
+    app: postgres-shard-1
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+# Database Shard 2
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-shard-2
+  labels:
+    app: postgres-shard-2
+spec:
+  serviceName: postgres-shard-2-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-shard-2
+  template:
+    metadata:
+      labels:
+        app: postgres-shard-2
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          envFrom:
+            - secretRef:
+                name: url-shortener-secrets
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-shard-2-service
+  labels:
+    app: postgres-shard-2
+spec:
+  selector:
+    app: postgres-shard-2
+  ports:
+    - port: 5432
+      targetPort: 5432

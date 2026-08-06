@@ -1,23 +1,122 @@
 version: "3.9"
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-      - redis
 
-  postgres:
-    image: postgres:16
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: url_shortener_lb
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app1
+      - app2
+      - app3
+
+  app1:
+    build: .
+    container_name: url_shortener_app1
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      BASE_URL: http://localhost:8080
+      SHARD_URLS: postgresql://url_user:url_password@postgres_shard_0:5432/urlshortener,postgresql://url_user:url_password@postgres_shard_1:5432/urlshortener,postgresql://url_user:url_password@postgres_shard_2:5432/urlshortener
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres_shard_0:
+        condition: service_healthy
+      postgres_shard_1:
+        condition: service_healthy
+      postgres_shard_2:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  app2:
+    build: .
+    container_name: url_shortener_app2
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      BASE_URL: http://localhost:8080
+      SHARD_URLS: postgresql://url_user:url_password@postgres_shard_0:5432/urlshortener,postgresql://url_user:url_password@postgres_shard_1:5432/urlshortener,postgresql://url_user:url_password@postgres_shard_2:5432/urlshortener
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres_shard_0:
+        condition: service_healthy
+      postgres_shard_1:
+        condition: service_healthy
+      postgres_shard_2:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  app3:
+    build: .
+    container_name: url_shortener_app3
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      BASE_URL: http://localhost:8080
+      SHARD_URLS: postgresql://url_user:url_password@postgres_shard_0:5432/urlshortener,postgresql://url_user:url_password@postgres_shard_1:5432/urlshortener,postgresql://url_user:url_password@postgres_shard_2:5432/urlshortener
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres_shard_0:
+        condition: service_healthy
+      postgres_shard_1:
+        condition: service_healthy
+      postgres_shard_2:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    container_name: url_shortener_redis
+    ports:
+      - "6379:6379"
+
+  postgres_shard_0:
+    image: postgres:16-alpine
+    container_name: url_shortener_db_shard_0
     environment:
       POSTGRES_DB: urlshortener
       POSTGRES_USER: url_user
       POSTGRES_PASSWORD: url_password
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U url_user -d urlshortener"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
 
-  redis:
-    image: redis:7
+  postgres_shard_1:
+    image: postgres:16-alpine
+    container_name: url_shortener_db_shard_1
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: url_user
+      POSTGRES_PASSWORD: url_password
     ports:
-      - "6379:6379"
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U url_user -d urlshortener"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  postgres_shard_2:
+    image: postgres:16-alpine
+    container_name: url_shortener_db_shard_2
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: url_user
+      POSTGRES_PASSWORD: url_password
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U url_user -d urlshortener"]
+      interval: 3s
+      timeout: 5s
+      retries: 5

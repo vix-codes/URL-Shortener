@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: url-shortener-config
+  labels:
+    app: url-shortener
+data:
+  PORT: "3000"
+  NODE_ENV: "production"
+  BASE_URL: "http://url-shortener-service:80"
+  REDIS_URL: "redis://redis-service:6379"
+  SHARD_URLS: "postgresql://url_user:url_password@postgres-shard-0-service:5432/urlshortener,postgresql://url_user:url_password@postgres-shard-1-service:5432/urlshortener,postgresql://url_user:url_password@postgres-shard-2-service:5432/urlshortener"

@@ -47,7 +47,7 @@ async function handleRedirect(req, res, next) {
       return res.status(404).json({ error: 'Short URL not found.' });
     }
 
-    await incrementClicks(row.id);
+    incrementClicks(row.id, row.short_code);
 
     return res.redirect(302, row.original_url);
   } catch (err) {
